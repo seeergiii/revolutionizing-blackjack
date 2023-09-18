@@ -351,29 +351,34 @@ if button:
 
             st.sidebar.title(dealer_cards_string)
 
-            headers = {"accept": "application/json", "Content-Type": "application/json"}
+            # headers = {"accept": "application/json", "Content-Type": "application/json"}
 
             data = {"dealer": dealer_cards, "player": player_cards}
 
+            breakpoint()
+            api_url = os.environ["ENDPOINT_MOVE"]
             response = requests.post(
-                "https://recommend-okumlrfyiq-ew.a.run.app/predict_move",
-                headers=headers,
+                os.environ["ENDPOINT_MOVE"],
+                # headers=headers,
                 json=data,
             )
 
-            st.sidebar.title("Recommended move:")
+            if response.status_code == 200:
+                moves = response.json()
+                print("✅ API called succesfully")
+                print(predictions)
+            else:
+                print("❌ API call failed with status code:", response.status_code)
 
-            try:
-                if not response.json()["next_move"] == "":
-                    st.sidebar.title(response.json()["next_move"])
-                else:
-                    st.sidebar.title("Game over, you're busted!")
-            except:
-                st.sidebar.title("Game over, you're busted!")
+            st.sidebar.title("Recommended move:")
+            st.sidebar.title(moves["next_move"])
+            st.sidebar.title(moves["message"])
 
         if predictions["detections"] == 0:
             st.sidebar.title("❌ No cards detected!")
-            st.sidebar.caption('💡 Did you try improving the lightning?')
-            st.sidebar.caption('📹 Are you holding the camera steady enough?')
-            st.sidebar.caption('🤔 Are there any other objects on the table?')
-            st.sidebar.caption('⚙️ You can always run the predictions on the default model (you chose a work-in-progress model)')
+            st.sidebar.caption("💡 Did you try improving the lightning?")
+            st.sidebar.caption("📹 Are you holding the camera steady enough?")
+            st.sidebar.caption("🤔 Are there any other objects on the table?")
+            st.sidebar.caption(
+                "⚙️ You can always run the predictions on the default model (this is a work-in-progress model!)"
+            )
