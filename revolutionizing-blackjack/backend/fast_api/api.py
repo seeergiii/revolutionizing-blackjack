@@ -9,6 +9,9 @@ import os
 from backend.computer_vision.computer_vision import (
     load_roboflow_model,
     predict_roboflow_model,
+    load_model,
+    image_decoder,
+    get_predictions,
     class_mapping,
 )
 
@@ -23,8 +26,9 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# Cache model
+# Cache models
 app.state.roboflow_model = load_roboflow_model()
+app.state.model = load_model(os.environ["MODEL_PATH"])
 
 
 @app.get("/")
@@ -35,7 +39,7 @@ def index():
 @app.post("/card_predictions_roboflow")
 async def receive_image(img: UploadFile = File(...)):
     """
-    Given image, returns predictions and clusters
+    Given image, returns predictions and clusters from RoboFlow model.
     Returns None if there are no predictions
     """
     # Receiving and decoding the image
@@ -76,3 +80,16 @@ async def receive_image(img: UploadFile = File(...)):
         "bounding boxes": bounding_boxes,
         "confidence": confidence,
     }
+
+
+@app.post("/card_predictions_yolo")
+async def receive_image(img: UploadFile = File(...)):
+    """
+    Given image, returns predictions and clusters from own trained model.
+    Returns None if there are no predictions
+    """
+    contents = await img.read()
+    decoded_img = image_decoder(contents)
+    predictions = get_predictions(model=app.state.model, decoded_img=decoded_img)
+
+    return predictions
