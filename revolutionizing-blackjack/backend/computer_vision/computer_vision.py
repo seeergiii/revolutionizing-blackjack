@@ -257,7 +257,7 @@ def get_predictions(model: keras_cv.models, decoded_img: tf.Tensor) -> tf.Tensor
 
     predictions = {
         "detections": num_detections,
-        "cards_detected": predicted_cards,
+        "cards detected": predicted_cards,
         "bounding boxes": original_img_boxes,
         "confidence": confidences,
     }

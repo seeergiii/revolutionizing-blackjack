@@ -227,10 +227,13 @@ div.stButton > button:first-child {
     unsafe_allow_html=True,
 )
 
-st.sidebar.title("Press predict when you are ready! :sunglasses:")
+st.sidebar.title("Press predict whenever you are ready! :sunglasses:")
 st.sidebar.title("⬇️⬇️⬇️")
-button = st.sidebar.button("Predict")
 
+button = st.sidebar.button("Predict")
+choose_yolo = st.sidebar.toggle(
+    "🚧 WORK IN PROGRESS 🚧 - Predict using our own trained YOLOv8 computer vision model"
+)
 
 if button:
     # save queued values
@@ -245,27 +248,42 @@ if button:
         img_name = "frame.png"
         img_path = os.path.join(img_directory, img_name)
         cv2.imwrite(img_path, frame_at_button_press)
-
         # Create a dictionary with the image file
         files = {"img": ("frame.png", open(img_path, "rb"))}
-        # Make the API call
-        api_url = os.environ["ENDPOINT_RB"]
-        response = requests.post(api_url, files=files)
 
-        # Check the response
-        if response.status_code == 200:
-            predictions = response.json()
-            print("✅ API called succesfully")
-            print(predictions)
-        else:
-            print("❌ API call failed with status code:", response.status_code)
+        # User did not choose to run own YOLO model
+        if not choose_yolo:
+            # Make the API call
+            api_url = os.environ["ENDPOINT_RB"]
+            response = requests.post(api_url, files=files)
 
-        os.remove(img_path)
+            # Check the response
+            if response.status_code == 200:
+                predictions = response.json()
+                print("✅ API called succesfully")
+                print(predictions)
+            else:
+                print("❌ API call failed with status code:", response.status_code)
+
+            os.remove(img_path)
+
+            print(predictions["detections"])
+        # User chosed using own YOLO model
+        if choose_yolo:
+            # Make the API call
+            api_url = os.environ["ENDPOINT_YOLO"]
+            response = requests.post(api_url, files=files)
+
+            # Check the response
+            if response.status_code == 200:
+                predictions = response.json()
+                print("✅ API called succesfully")
+                print(predictions)
+            else:
+                print("❌ API call failed with status code:", response.status_code)
 
         player_cards = []
         dealer_cards = []
-
-        print(predictions["detections"])
 
         if predictions["detections"] > 0:
             for card in range(predictions["detections"]):
@@ -300,13 +318,13 @@ if button:
             for card in player_cards:
                 emoji = (
                     "♣️"
-                    if card[-1] == "C"
+                    if card[-1].upper() == "C"
                     else "♠️"
-                    if card[-1] == "S"
+                    if card[-1].upper() == "S"
                     else "♥️"
-                    if card[-1] == "H"
+                    if card[-1].upper() == "H"
                     else "♦️"
-                    if card[-1] == "D"
+                    if card[-1].upper() == "D"
                     else ""
                 )
                 player_cards_string += " " + card[:-1] + emoji
@@ -320,13 +338,13 @@ if button:
             for card in dealer_cards:
                 emoji = (
                     "♣️"
-                    if card[-1] == "C"
+                    if card[-1].upper() == "C"
                     else "♠️"
-                    if card[-1] == "S"
+                    if card[-1].upper() == "S"
                     else "♥️"
-                    if card[-1] == "H"
+                    if card[-1].upper() == "H"
                     else "♦️"
-                    if card[-1] == "D"
+                    if card[-1].upper() == "D"
                     else ""
                 )
                 dealer_cards_string += " " + card[:-1] + emoji
@@ -349,6 +367,13 @@ if button:
                 if not response.json()["next_move"] == "":
                     st.sidebar.title(response.json()["next_move"])
                 else:
-                    st.sidebar.title("Game ended, youre busted!")
+                    st.sidebar.title("Game over, you're busted!")
             except:
-                st.sidebar.title("Game ended, youre busted!")
+                st.sidebar.title("Game over, you're busted!")
+
+        if predictions["detections"] == 0:
+            st.sidebar.title("❌ No cards detected!")
+            st.sidebar.caption('💡 Did you try improving the lightning?')
+            st.sidebar.caption('📹 Are you holding the camera steady enough?')
+            st.sidebar.caption('🤔 Are there any other objects on the table?')
+            st.sidebar.caption('⚙️ You can always run the predictions on the default model (you chose a work-in-progress model)')
