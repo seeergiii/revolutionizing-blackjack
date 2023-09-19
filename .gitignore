@@ -3,7 +3,7 @@ raw_data/
 .envrc
 .python-version
 **/__pycache__/
-**/blackjack.egg-info
+*.egg-info
 *.DS_Store
 *.pyc
 *.h5
