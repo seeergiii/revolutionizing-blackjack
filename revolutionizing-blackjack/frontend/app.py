@@ -9,22 +9,38 @@ import numpy as np
 import requests
 from roboflow import Roboflow
 
-
+# RTC configuration for WebRTC
 RTC_CONFIGURATION = RTCConfiguration(
     {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
 )
 
 
+# Function to get coordinates of card clusters in a frame
 def get_coordinates_of_clusters(
     frame, canny_thresh1: float = 50, canny_thresh2: float = 150
-):
+) -> list:
+    """
+    Get the coordinates of clusters in an image frame.
+
+    Args:
+        frame (numpy.ndarray): Input image frame.
+        canny_thresh1 (float): Threshold for Canny edge detection.
+        canny_thresh2 (float): Threshold for Canny edge detection.
+
+    Returns:
+        list: List of tuples representing the coordinates of clusters.
+    """
+    # Preprocess the frame for object detection
     image_greyscale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     image_blurred = cv2.GaussianBlur(image_greyscale, (5, 5), 0)
     image_canny_kernel = cv2.Canny(image_blurred, canny_thresh1, canny_thresh2)
+
+    # Find contours of objects in the frame
     contours, _ = cv2.findContours(
         image_canny_kernel, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
     )
 
+    # Calculate the size of the preprocessed image
     preprocessed_image_size = image_greyscale.shape[0] * image_greyscale.shape[1]
 
     coordinates = []
@@ -34,10 +50,12 @@ def get_coordinates_of_clusters(
         aspect_ratio_w_h = w / h
         aspect_ratio_h_w = h / w
 
-        # Change these thresholds as per your requirements
+        # Define thresholds for object filtering
+        # Change thresholds as per your requirements
         area_threshold = 0.02 * preprocessed_image_size
         aspect_ratio_threshold = 0.4
 
+        # Filter objects based on area and aspect ratio
         if (
             area > area_threshold
             and aspect_ratio_w_h > aspect_ratio_threshold
@@ -48,26 +66,40 @@ def get_coordinates_of_clusters(
     return coordinates
 
 
+# Class to process video frames and perform object detection
 class VideoProcessor:
     def __init__(self):
+        # Initialize variables for object midpoints and frame
         self.player_midpoint = None  # Initialize the player's midpoint
         self.dealer_midpoint = None  # Initialize the dealer's midpoint
         self.frame = None  # Initialize a frame
 
+        # Default parameters for Canny edge detection
         self.canny_thresh1 = 50
         self.canny_thresh2 = 150
         self.canny_image_stream = False
         self.alpha = 0.5
         self.beta = 0
 
-        self.frame_counter = 0  # Initialize the frame counter
+        # Initialize frame counter
+        self.frame_counter = 0
 
-    def recv(self, frame):
+    def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+        """
+        Receive and process video frames.
+
+        Args:
+            frame (av.VideoFrame): Input video frame.
+
+        Returns:
+            av.VideoFrame: Processed video frame.
+        """
         self.frame_counter += 1
         img_for_save = frame.to_ndarray(format="bgr24")
         img = np.copy(img_for_save)
 
         if self.canny_image_stream:
+            # Apply Canny edge detection if enabled
             image_greyscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             image_blurred = cv2.GaussianBlur(image_greyscale, (5, 5), 0)
             img_canny = cv2.Canny(image_blurred, self.canny_thresh1, self.canny_thresh2)
@@ -152,9 +184,11 @@ class VideoProcessor:
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
 
+# Streamlit app title and description
 st.title("Revolutionizing Blackjack :heart:")
 st.write("The ultimate blackjack AI")
 
+# Create a WebRTC streaming context
 webrtc_ctx = webrtc_streamer(
     key="WYH",
     mode=WebRtcMode.SENDRECV,
@@ -164,6 +198,7 @@ webrtc_ctx = webrtc_streamer(
     async_processing=False,
 )
 
+# Toggle for enabling Canny edge detection
 canny_image_stream_global = st.toggle(
     " ⬅️ This switch turns on canny edge detection in videostream factory"
 )
@@ -236,7 +271,7 @@ choose_yolo = st.sidebar.toggle(
 )
 
 if button:
-    # save queued values
+    # Save queued values
     frame_at_button_press = webrtc_ctx.video_transformer.frame
     player_midpoint_at_button_press = webrtc_ctx.video_transformer.player_midpoint
     dealer_midpoint_at_button_press = webrtc_ctx.video_transformer.dealer_midpoint
@@ -351,15 +386,12 @@ if button:
 
             st.sidebar.title(dealer_cards_string)
 
-            # headers = {"accept": "application/json", "Content-Type": "application/json"}
-
             data = {"dealer": dealer_cards, "player": player_cards}
 
             breakpoint()
             api_url = os.environ["ENDPOINT_MOVE"]
             response = requests.post(
                 os.environ["ENDPOINT_MOVE"],
-                # headers=headers,
                 json=data,
             )
 

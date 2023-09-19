@@ -7,6 +7,7 @@ import cv2
 import os
 import re
 
+# Import functions and classes from project modules
 from backend.computer_vision.computer_vision import (
     load_roboflow_model,
     predict_roboflow_model,
@@ -34,13 +35,16 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# Cache models
+# Cache models at API startup
 app.state.roboflow_model = load_roboflow_model()
 app.state.model = load_model(os.environ["MODEL_PATH"])
 
 
 @app.get("/")
 def index():
+    """
+    Endpoint for testing the API status.
+    """
     return {"status": "ok"}
 
 
@@ -105,13 +109,34 @@ async def receive_image(img: UploadFile = File(...)):
 
 @app.post("/predict_move")
 def predict(input: dict = {"dealer": ["10H"], "player": ["2D", "4C"]}):
+    """
+    Given a dictionary with the dealer and player cards, it returns the current status of the gameplay
+    and recommends the best move to the player.
+
+    Args:
+        input (dict): A dictionary containing "dealer" and "player" lists of cards.
+
+    Returns:
+        dict: A dictionary with information about the next move, player's hand score, dealer's hand score,
+              and a message.
+    """
+    # Extract player and dealer cards from the input dictionary
     player_cards = [re.sub("[SCDH]", "", i) for i in input.get("player")]
     dealer_cards = [re.sub("[SCDH]", "", i) for i in input.get("dealer")]
+
+    # Create player and dealer hand objects
     player_hand = Hand(player_cards)
     dealer_hand = Hand(dealer_cards)
+
+    # Check if the dealer has more than one card to determine the game status
     if len(dealer_cards) > 1:
+        # Check the winner of the game
         message = check_winner(player_hand, dealer_hand)
+
+        # Get player's and dealer's hand scores
         player_score = player_hand.get_score()
+
+        # Return the game status and information
         return {
             "next_move": "It is dealer's turn.",
             "player_hand": player_score,
@@ -119,7 +144,9 @@ def predict(input: dict = {"dealer": ["10H"], "player": ["2D", "4C"]}):
             "message": message,
         }
     else:
+        # Get player's hand score
         player_score = player_hand.get_score()
+
         if player_hand.get_score() > 21:
             rec = "Player is busted."
 
@@ -128,6 +155,8 @@ def predict(input: dict = {"dealer": ["10H"], "player": ["2D", "4C"]}):
 
         else:
             rec = EX.get(player_hand.recommend(dealer_hand))
+
+        # Return the recommended move and player's hand score
         return {
             "next_move": rec,
             "player_hand": player_score,
