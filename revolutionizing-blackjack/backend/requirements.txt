@@ -9,6 +9,7 @@ pandas
 six
 numpy
 roboflow
+xgboost
 
 # api
 fastapi

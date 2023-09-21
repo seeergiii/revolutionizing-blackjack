@@ -139,7 +139,7 @@ def predict(input: dict = {"dealer": ["10H"], "player": ["2D", "4C"]}):
 
         # Return the game status and information
         return {
-            "next_move": "It is dealer's turn.",
+            "next_move": "Dealer's turn.",
             "player_hand": player_score,
             "dealer_hand": dealer_hand.get_score(),
             "message": message,

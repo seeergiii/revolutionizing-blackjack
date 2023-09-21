@@ -2,6 +2,7 @@ import os
 
 # LOCAL MODEL PATH
 MODEL_PATH = os.environ.get("MODEL_PATH")
+ODDS_MODEL_PATH = os.environ.get("ODDS_MODEL_PATH")
 
 # Roboflow
 ROBOFLOW_API_KEY = os.environ.get("ROBOFLOW_API_KEY")
