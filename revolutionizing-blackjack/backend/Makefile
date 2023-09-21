@@ -1,10 +1,8 @@
-##### Prediction API - - - - - - - - - - - - - - - - - - - - - - - - -
-
+##### Run API - - - - - - - - - - - - - - - - - - - - - - - - -
 run_api:
 	uvicorn fast_api.api:app --reload
 
 ##### Docker - - - - - - - - - - - - - - - - - - - - - - - - -
-
 docker_build:
 	docker build -t template-image-api .
 
@@ -12,7 +10,6 @@ docker_run:
 	docker run -p 8000:8000 --name api template-image-api
 
 ##### GCP - - - - - - - - - - - - - - - - - - - - - - - - -
-
 GCP_PROJECT_ID=XXX
 
 DOCKER_IMAGE_NAME=XXX

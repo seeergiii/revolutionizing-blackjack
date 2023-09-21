@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import re
 
 # Define the decision matrices for double down, hard hand, and soft hand strategies
 DH = np.array(

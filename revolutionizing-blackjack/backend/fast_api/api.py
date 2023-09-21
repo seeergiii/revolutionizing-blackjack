@@ -8,16 +8,17 @@ import os
 import re
 
 # Import functions and classes from project modules
-from backend.computer_vision.computer_vision import (
+from params import *
+
+from computer_vision.computer_vision import (
     load_roboflow_model,
     predict_roboflow_model,
     load_model,
     image_decoder,
     get_predictions,
-    class_mapping,
 )
 
-from backend.move_recommender.move_recommender import (
+from move_recommender.move_recommender import (
     Hand,
     SCORE_TABLE,
     check_winner,
@@ -37,7 +38,7 @@ app.add_middleware(
 
 # Cache models at API startup
 app.state.roboflow_model = load_roboflow_model()
-app.state.model = load_model(os.environ["MODEL_PATH"])
+app.state.model = load_model(MODEL_PATH)
 
 
 @app.get("/")
@@ -60,7 +61,7 @@ async def receive_image(img: UploadFile = File(...)):
     cv2_img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)  # type(cv2_img) => numpy.ndarray
 
     # Image directory and file name
-    directory = os.path.join("backend", "computer_vision", "temp_image")
+    directory = os.path.join("computer_vision", "temp_image")
     filename = "input.png"
 
     # Temporarly saves image

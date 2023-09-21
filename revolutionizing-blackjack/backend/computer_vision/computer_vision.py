@@ -5,64 +5,8 @@ import numpy as np
 import keras_cv
 import tensorflow as tf
 
+from params import *
 from roboflow import Roboflow
-
-# Card class mapping
-class_ids = [
-    "10c",
-    "10d",
-    "10h",
-    "10s",
-    "2c",
-    "2d",
-    "2h",
-    "2s",
-    "3c",
-    "3d",
-    "3h",
-    "3s",
-    "4c",
-    "4d",
-    "4h",
-    "4s",
-    "5c",
-    "5d",
-    "5h",
-    "5s",
-    "6c",
-    "6d",
-    "6h",
-    "6s",
-    "7c",
-    "7d",
-    "7h",
-    "7s",
-    "8c",
-    "8d",
-    "8h",
-    "8s",
-    "9c",
-    "9d",
-    "9h",
-    "9s",
-    "Ac",
-    "Ad",
-    "Ah",
-    "As",
-    "Jc",
-    "Jd",
-    "Jh",
-    "Js",
-    "Kc",
-    "Kd",
-    "Kh",
-    "Ks",
-    "Qc",
-    "Qd",
-    "Qh",
-    "Qs",
-]
-class_mapping = dict(zip(range(len(class_ids)), class_ids))
 
 
 ##### Load RoboFlow model ####
@@ -70,7 +14,7 @@ def load_roboflow_model() -> Roboflow:
     """
     Load and return roboflow model
     """
-    api_key = os.environ["ROBOFLOW_API_KEY"]
+    api_key = ROBOFLOW_API_KEY
     rf = Roboflow(api_key=api_key)
     project = rf.workspace().project("playing-cards-ow27d")
     model = project.version(int(4)).model
@@ -86,7 +30,7 @@ def predict_roboflow_model(model: Roboflow, img: str = "input.png") -> pd.DataFr
     """
     print("⏳ Obtaining predictions... Please wait...")
     card_predictions = model.predict(
-        os.path.join("backend", "computer_vision", "temp_image", img),
+        os.path.join("computer_vision", "temp_image", img),
         confidence=int(40),
         overlap=int(30),
     ).json()["predictions"]
@@ -107,7 +51,7 @@ def create_custom_model() -> keras_cv.models:
     """
     backbone = keras_cv.models.YOLOV8Backbone.from_preset("yolo_v8_xl_backbone_coco")
     yolo = keras_cv.models.YOLOV8Detector(
-        num_classes=len(class_mapping),
+        num_classes=len(CLASS_MAPPING),
         bounding_box_format="center_xywh",
         backbone=backbone,
         fpn_depth=1,
@@ -218,7 +162,7 @@ def get_predictions(model: keras_cv.models, decoded_img: tf.Tensor) -> tf.Tensor
         confidences = y_pred["confidence"][0][:num_detections]
         confidences = confidences.tolist()
 
-        predicted_cards = [class_mapping[card] for card in classes]
+        predicted_cards = [CLASS_MAPPING[card] for card in classes]
 
         # Calculate new dimensions while keeping the aspect ratio
         original_img_w = decoded_img.shape[1]

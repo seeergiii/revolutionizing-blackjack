@@ -1,0 +1,12 @@
+raw_data/
+.env
+.envrc
+.python-version
+**/__pycache__/
+*.egg-info
+*.DS_Store
+*.pyc
+*.h5
+*.yaml
+*.zip
+*.ipynb

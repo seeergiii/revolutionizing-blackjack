@@ -7,7 +7,9 @@ import cv2
 import os
 import numpy as np
 import requests
-from roboflow import Roboflow
+
+# Modify for working API URL
+api_url = "http://127.0.0.1:8000"
 
 # RTC configuration for WebRTC
 RTC_CONFIGURATION = RTCConfiguration(
@@ -279,7 +281,7 @@ if button:
     # Check if frame_at_button_press is valid (not None and not empty)
     if frame_at_button_press is not None and frame_at_button_press.size > 0:
         # Temporary saving frame to make API call
-        img_directory = os.path.join("frontend", "temp_image")
+        img_directory = os.path.join("temp_image")
         img_name = "frame.png"
         img_path = os.path.join(img_directory, img_name)
         cv2.imwrite(img_path, frame_at_button_press)
@@ -289,8 +291,9 @@ if button:
         # User did not choose to run own YOLO model
         if not choose_yolo:
             # Make the API call
-            api_url = os.environ["ENDPOINT_RB"]
-            response = requests.post(api_url, files=files)
+            response = requests.post(
+                f"{api_url}/card_predictions_roboflow", files=files
+            )
 
             # Check the response
             if response.status_code == 200:
@@ -388,7 +391,6 @@ if button:
 
             data = {"dealer": dealer_cards, "player": player_cards}
 
-            breakpoint()
             api_url = os.environ["ENDPOINT_MOVE"]
             response = requests.post(
                 os.environ["ENDPOINT_MOVE"],
