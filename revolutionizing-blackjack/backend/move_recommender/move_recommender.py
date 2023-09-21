@@ -177,4 +177,4 @@ def check_winner(player_hand, dealer_hand):
     elif player_hand.get_score() == dealer_hand.get_score():
         return "Tie."
     else:
-        return "Dealer keeps playing."
+        return "Dealer hits."

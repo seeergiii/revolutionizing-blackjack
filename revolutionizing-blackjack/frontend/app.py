@@ -68,6 +68,11 @@ def get_coordinates_of_clusters(
     return coordinates
 
 
+odds_dealer_cards = []  # List of dealer cards
+odds_player_cards = []  # List of player cards
+odds_moves = []  # List of moves
+
+
 # Class to process video frames and perform object detection
 class VideoProcessor:
     def __init__(self):
@@ -299,13 +304,11 @@ if button:
             if response.status_code == 200:
                 predictions = response.json()
                 print("✅ API called succesfully")
-                print(predictions)
             else:
                 print("❌ API call failed with status code:", response.status_code)
 
             os.remove(img_path)
 
-            print(predictions["detections"])
         # User chosed using own YOLO model
         if choose_yolo:
             # Make the API call
@@ -316,7 +319,6 @@ if button:
             if response.status_code == 200:
                 predictions = response.json()
                 print("✅ API called succesfully")
-                print(predictions)
             else:
                 print("❌ API call failed with status code:", response.status_code)
 
@@ -346,10 +348,6 @@ if button:
 
             player_cards = list(set(player_cards))
             dealer_cards = list(set(dealer_cards))
-            print(player_cards)
-            print(dealer_cards)
-
-            st.sidebar.title("Player cards:")
 
             player_cards_string = ""
 
@@ -367,9 +365,7 @@ if button:
                 )
                 player_cards_string += " " + card[:-1] + emoji
 
-            st.sidebar.title(player_cards_string)
-
-            st.sidebar.title("Dealer cards:")
+            st.sidebar.title(f"Player cards: {player_cards_string}")
 
             dealer_cards_string = ""
 
@@ -387,9 +383,32 @@ if button:
                 )
                 dealer_cards_string += " " + card[:-1] + emoji
 
-            st.sidebar.title(dealer_cards_string)
+            st.sidebar.title(f"Dealer cards: {dealer_cards_string}")
 
             data = {"dealer": dealer_cards, "player": player_cards}
+
+            # Append cards to list to later estimate winning odds
+            SCORE_TABLE = {
+                "A": 11,
+                "J": 10,
+                "K": 10,
+                "Q": 10,
+                "2": 2,
+                "3": 3,
+                "4": 4,
+                "5": 5,
+                "6": 6,
+                "7": 7,
+                "8": 8,
+                "9": 9,
+                "10": 10,
+            }
+            for card in dealer_cards:
+                mapped_score = SCORE_TABLE.get(card[:-1])
+                odds_dealer_cards.append(int(mapped_score))
+            for card in player_cards:
+                mapped_score = SCORE_TABLE.get(card[:-1])
+                odds_dealer_cards.append(int(mapped_score))
 
             api_url = os.environ["ENDPOINT_MOVE"]
             response = requests.post(
@@ -400,13 +419,112 @@ if button:
             if response.status_code == 200:
                 moves = response.json()
                 print("✅ API called succesfully")
-                print(predictions)
             else:
                 print("❌ API call failed with status code:", response.status_code)
 
-            st.sidebar.title("Recommended move:")
-            st.sidebar.title(moves["next_move"])
+            st.sidebar.title(f"Recommended move: {moves['next_move']}")
             st.sidebar.title(moves["message"])
+
+            # Prepare data to call API end-point for XGBoost odds estimator model
+            data = {
+                "player_card_1": [0],  # Player's first card
+                "player_card_2": [0],  # Player's second card
+                "player_card_3": [0],  # Player's third card
+                "player_card_4": [0],  # Player's fourth card
+                "player_card_5": [0],  # Player's fifth card
+                "player_card_6": [0],  # Player's sixth card
+                "player_card_7": [0],  # Player's seventh card
+                "dealer_card_1": [0],  # Dealer's first card
+                "dealer_card_2": [0],  # Dealer's second card
+                "dealer_card_3": [0],  # Dealer's third cad
+                "dealer_card_4": [0],  # Dealer's fourth card
+                "dealer_card_5": [0],  # Dealer's fifth card
+                "dealer_card_6": [0],  # Dealer's sixth card
+                "dealer_card_7": [0],  # Dealer's seventh card
+                "action_taken_1_D": [0],  # Action taken on first hand (Dealer)
+                "action_taken_1_H": [0],  # Action taken on first hand (Hit)
+                "action_taken_1_N": [0],  # Action taken on first hand (Double)
+                "action_taken_1_P": [0],  # Action taken on first hand (Split)
+                "action_taken_1_R": [0],  # Action taken on first hand (Surrender)
+                "action_taken_1_S": [1],  # Action taken on first hand (Stand)
+                "action_taken_2_D": [0],  # Action taken on second hand (Dealer)
+                "action_taken_2_H": [0],  # Action taken on second hand (Hit)
+                "action_taken_2_P": [0],  # Action taken on second hand (Split)
+                "action_taken_2_R": [0],  # Action taken on second hand (Surrender)
+                "action_taken_2_S": [0],  # Action taken on second hand (Stand)
+                "action_taken_2_None": [0],  # Action taken on second hand
+                "action_taken_3_D": [0],  # Action taken on third hand (Dealer)
+                "action_taken_3_H": [0],  # Action taken on third hand (Hit)
+                "action_taken_3_P": [0],  # Action taken on third hand (Split)
+                "action_taken_3_S": [0],  # Action taken on third hand (Stand)
+                "action_taken_3_None": [0],  # Action taken on third hand
+                "action_taken_4_D": [0],  # Action taken on fourth hand (Dealer)
+                "action_taken_4_H": [0],  # Action taken on fourth hand (Hit)
+                "action_taken_4_S": [0],  # Action taken on fourth hand (Stand)
+                "action_taken_4_None": [0],  # Action taken on fourth hand
+                "action_taken_5_H": [0],  # Action taken on fifth hand (Hit)
+                "action_taken_5_S": [0],  # Action taken on fifth hand (Stand)
+                "action_taken_5_None": [0],  # Action taken on fifth hand
+                "action_taken_6_H": [0],  # Action taken on sixth hand (Hit)
+                "action_taken_6_S": [0],  # Action taken on sixth hand (Stand)
+                "action_taken_6_None": [0],  # Action taken on sixth hand
+            }
+
+            # Iterate through dealer cards and update the corresponding keys in the dictionary
+            for i, card_value in enumerate(odds_dealer_cards):
+                key = f"dealer_card_{i + 1}"
+                data[key] = [card_value]
+
+            # Iterate through player cards and update the corresponding keys in the dictionary
+            for i, card_value in enumerate(odds_player_cards):
+                key = f"player_card_{i + 1}"
+                data[key] = [card_value]
+
+            if moves["message"] == "":
+                # Map of moves
+                EX = {
+                    "Hit": "H",
+                    "Stand": "S",
+                    "Double if allowed, otherwise hit": "D",
+                    "Double if allowed, otherwise stand": "D",
+                    "Surrender if allowed, otherwise hit": "R",
+                }
+
+                # Iterate through moves and update the corresponding keys in the dictionary
+                for i, move in enumerate(odds_moves):
+                    hand_num = (
+                        i // 5
+                    ) + 1  # Determine the hand number based on the index
+                    mapped_move = None  # Initialize as None in case no match is found
+                    for key, value in EX.items():
+                        if value == move:
+                            mapped_move = key
+                            break  # Exit the loop when a match is found
+                    move_key = f"action_taken_{hand_num}_{mapped_move}"
+                    data[move_key] = [1]
+
+            # Call API end-point for XGBoost odds estimator model
+            api_url = os.environ["ENDPOINT_ODDS"]
+            response = requests.post(
+                os.environ["ENDPOINT_ODDS"],
+                json=data,
+            )
+
+            if response.status_code == 200:
+                odds = response.json()
+                print("✅ API called succesfully")
+            else:
+                print("❌ API call failed with status code:", response.status_code)
+
+            if (
+                moves["next_move"] != "Player is busted."
+                and moves["next_move"] != "Player got a Blackjack."
+            ) or moves["message"] == "Dealer hits.":
+                st.sidebar.title(
+                    f"🔮 You have a {round(odds['win']*100,2)}% chance of winning this hand"
+                )
+            else:
+                odds_moves = []  # List of moves
 
         if predictions["detections"] == 0:
             st.sidebar.title("❌ No cards detected!")

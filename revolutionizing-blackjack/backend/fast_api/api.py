@@ -233,5 +233,6 @@ def predict(
     """
     # Call the predict_odd_estimator_model function to make predictions
     prediction = predict_odd_estimator_model(app.state.xgboost_model, input)
+    print(prediction[1], prediction[0])
     # Return the predicted odds
     return {"win": prediction[1], "lose": prediction[0]}
