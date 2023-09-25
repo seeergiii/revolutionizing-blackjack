@@ -1,6 +1,6 @@
-<h1 align="center"> ♣️ ♥️ ♠️ ♦️ Revolutionizing Blackjack (v2) ♣️ ♥️ ♠️ ♦️</h1>
+<h1 align="center"> Revolutionizing Blackjack (v2) </h1>
 
-<h4 align="justify"> Modernized approach to blackjack gaming with real-time card recognition using OpenCV2 and YOLOv8. Enhancing gameplay through AI-driven decision-making algorithms.</h4>
+<h4 align="justify"> Modernized approach to blackjack gaming with real-time card recognition using OpenCV2 and YOLOv8. Enhancing gameplay through AI-driven decision-making algorithms. </h4>
 
 <h2 align="justify"> Architecture </h2>
 
