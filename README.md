@@ -8,6 +8,6 @@
 
 <h2 align="justify"> Demo </h2>
 
-https://github.com/seeergiii/revolutionizing-blackjack/assets/63933433/d1bc226c-b478-4e69-98ba-170421207cd7
+![revolutionizing-blackjack](https://github.com/seeergiii/revolutionizing-blackjack/assets/63933433/b24857d5-1a1b-4870-bdee-c22404a3e471)
 
 <h6 align="center"> 🚧 Work in progress ... 🚧 </h6>
