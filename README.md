@@ -9,5 +9,3 @@
 <h2 align="justify"> Demo </h2>
 
 ![revolutionizing-blackjack](https://github.com/seeergiii/revolutionizing-blackjack/assets/63933433/b24857d5-1a1b-4870-bdee-c22404a3e471)
-
-<h6 align="center"> 🚧 Work in progress ... 🚧 </h6>
